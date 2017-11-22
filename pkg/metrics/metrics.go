@@ -23,12 +23,43 @@ var (
 	// Namespace is used to scope metrics from cilium. It is prepended to metric
 	// names and separated with a '_'
 	Namespace = "cilium"
+
+	// Endpoints
+
+	// NumEndpoints is the number of managed endpoints
+	NumEndpoints = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: Namespace,
+		Name:      "endpoints",
+		Help:      "Number of endpoints managed by this agent",
+		// FIXME: do we have any node IDs for the agent? or agent IDs? Do we even have to provide anything?
+		// ConstLabels: prometheus.Labels{"node": "a node ID, from k8s?",
+	})
+
+	// NumEndpointsRegenerating is the number of endpoints currently regenerating
+	NumEndpointsRegenerating = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: Namespace,
+		Name:      "endpoints_regenerating",
+		Help:      "Number of endpoints currently regenerating",
+	})
+
+	// CountEndpointsRegenerations is a count of the number of times any endpoint
+	// has been regenerated and success/fail outcome
+	CountEndpointsRegenerations = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: Namespace,
+		Name:      "endpoints_regenerations",
+		Help:      "Count of all endpoint regenerations that have completed, tagged by outcome",
+	},
+		[]string{"outcome"})
 )
 
 func init() {
 	registry.MustRegister(prometheus.NewProcessCollector(os.Getpid(), Namespace))
 	// TODO: Figure out how to put this into a Namespace
 	//registry.MustRegister(prometheus.NewGoCollector())
+
+	registry.MustRegister(NumEndpoints)
+	registry.MustRegister(NumEndpointsRegenerating)
+	registry.MustRegister(CountEndpointsRegenerations)
 }
 
 // Enable begins serving prometheus metrics on the address passed in. Addresses
