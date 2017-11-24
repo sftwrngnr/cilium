@@ -71,9 +71,10 @@ type kafkaConfiguration struct {
 // createKafkaRedirect creates a redirect with corresponding proxy
 // configuration. This will launch a proxy instance.
 func createKafkaRedirect(conf kafkaConfiguration) (Redirect, error) {
+	epInfo := conf.source.GetEndpointInfo()
 	redir := &kafkaRedirect{
 		conf:    conf,
-		epID:    conf.source.GetID(),
+		epID:    epInfo.ID,
 		ingress: conf.policy.Ingress,
 	}
 
@@ -92,7 +93,7 @@ func createKafkaRedirect(conf kafkaConfiguration) (Redirect, error) {
 		// As ingress proxy, all replies to incoming requests must have the
 		// identity of the endpoint we are proxying for
 		if redir.ingress {
-			marker |= int(conf.source.GetIdentity())
+			marker |= int(epInfo.Identity)
 		}
 	}
 

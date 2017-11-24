@@ -40,6 +40,7 @@ import (
 	"github.com/cilium/cilium/pkg/maps/policymap"
 	"github.com/cilium/cilium/pkg/option"
 	"github.com/cilium/cilium/pkg/policy"
+	"github.com/cilium/cilium/pkg/proxy/accesslog"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -497,14 +498,18 @@ func (e *Endpoint) GetID() uint64 {
 	return uint64(e.ID)
 }
 
-// RLock locks the endpoint for reading
-func (e *Endpoint) RLock() {
-	e.Mutex.RLock()
-}
-
-// RUnlock unlocks the endpoint after reading
-func (e *Endpoint) RUnlock() {
-	e.Mutex.RUnlock()
+func (e *Endpoint) GetEndpointInfo() *accesslog.EndpointInfo {
+	// Needs to be Lock since GetLabelsSHA might write into the endpoint.
+	e.Mutex.Lock()
+	defer e.Mutex.Unlock()
+	return &accesslog.EndpointInfo{
+		ID:           e.GetID(),
+		IPv4:         e.GetIPv4Address(),
+		IPv6:         e.GetIPv6Address(),
+		Identity:     uint64(e.GetIdentity()),
+		LabelsSHA256: e.GetLabelsSHA(),
+		Labels:       e.GetLabels(),
+	}
 }
 
 // GetLabels returns the labels as slice
@@ -710,6 +715,8 @@ func (e *Endpoint) GetIdentity() policy.NumericIdentity {
 
 // ResolveIdentity fetches Consumable from consumable cache, using security identity as key.
 func (e *Endpoint) ResolveIdentity(srcIdentity policy.NumericIdentity) *policy.Identity {
+	e.Mutex.RLock()
+	defer e.Mutex.RUnlock()
 	return e.Consumable.ResolveIdentityFromCache(srcIdentity)
 }
 

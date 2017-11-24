@@ -185,8 +185,8 @@ func createOxyRedirect(l4 *policy.L4Filter, id string, source ProxySource, to ui
 		router:  route.New(),
 		ingress: l4.Ingress,
 	}
-
-	redir.epID = source.GetID()
+	epInfo := source.GetEndpointInfo()
+	redir.epID = epInfo.ID
 
 	redirect := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		record := newHTTPLogRecord(redir, req.Method, req.URL, req.Proto, req.Header)
@@ -269,7 +269,7 @@ func createOxyRedirect(l4 *policy.L4Filter, id string, source ProxySource, to ui
 	// As ingress proxy, all replies to incoming requests must have the
 	// identity of the endpoint we are proxying for
 	if redir.ingress {
-		marker |= int(source.GetIdentity())
+		marker |= int(epInfo.Identity)
 	}
 
 	// Listen needs to be in the synchronous part of this function to ensure that

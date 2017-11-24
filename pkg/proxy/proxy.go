@@ -80,15 +80,8 @@ func GetMagicMark(isIngress bool) int {
 
 // ProxySource returns information about the endpoint being proxied.
 type ProxySource interface {
-	GetID() uint64
-	RLock()
-	GetLabels() []string
-	GetLabelsSHA() string
-	GetIdentity() policy.NumericIdentity
+	GetEndpointInfo() *accesslog.EndpointInfo
 	ResolveIdentity(policy.NumericIdentity) *policy.Identity
-	GetIPv4Address() string
-	GetIPv6Address() string
-	RUnlock()
 }
 
 // Proxy maintains state about redirects
@@ -152,15 +145,13 @@ var gcOnce sync.Once
 
 // localEndpointInfo fills the access log with the local endpoint info.
 func localEndpointInfo(r Redirect, info *accesslog.EndpointInfo) {
-	source := r.getSource()
-	source.RLock()
-	info.ID = source.GetID()
-	info.IPv4 = source.GetIPv4Address()
-	info.IPv6 = source.GetIPv6Address()
-	info.Labels = source.GetLabels()
-	info.LabelsSHA256 = source.GetLabelsSHA()
-	info.Identity = uint64(source.GetIdentity())
-	source.RUnlock()
+	epInfo := r.getSource().GetEndpointInfo()
+	info.ID = epInfo.ID
+	info.IPv4 = epInfo.IPv4
+	info.IPv6 = epInfo.IPv6
+	info.Labels = epInfo.Labels
+	info.LabelsSHA256 = epInfo.LabelsSHA256
+	info.Identity = epInfo.Identity
 }
 
 func fillInfo(r Redirect, l *accesslog.LogRecord, srcIPPort, dstIPPort string, srcIdentity uint32) {
@@ -239,12 +230,11 @@ func fillEndpointInfo(info *accesslog.EndpointInfo, ip net.IP) {
 			c := addressing.DeriveCiliumIPv4(ip)
 			ep := endpointmanager.LookupIPv4(c.String())
 			if ep != nil {
-				ep.RLock()
-				info.ID = uint64(ep.ID)
-				info.Labels = ep.GetLabels()
-				info.LabelsSHA256 = ep.GetLabelsSHA()
-				info.Identity = uint64(ep.GetIdentity())
-				ep.RUnlock()
+				epInfo := ep.GetEndpointInfo()
+				info.ID = epInfo.ID
+				info.Labels = epInfo.Labels
+				info.LabelsSHA256 = epInfo.LabelsSHA256
+				info.Identity = epInfo.Identity
 			} else {
 				fillIdentity(info, policy.ReservedIdentityCluster)
 			}
@@ -268,11 +258,10 @@ func fillEndpointInfo(info *accesslog.EndpointInfo, ip net.IP) {
 
 			ep := endpointmanager.LookupCiliumID(id)
 			if ep != nil {
-				ep.RLock()
-				info.Labels = ep.GetLabels()
-				info.LabelsSHA256 = ep.GetLabelsSHA()
-				info.Identity = uint64(ep.GetIdentity())
-				ep.RUnlock()
+				epInfo := ep.GetEndpointInfo()
+				info.Labels = epInfo.Labels
+				info.LabelsSHA256 = epInfo.LabelsSHA256
+				info.Identity = epInfo.Identity
 			} else {
 				fillIdentity(info, policy.ReservedIdentityCluster)
 			}
