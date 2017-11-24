@@ -260,9 +260,9 @@ func TriggerPolicyUpdates(owner endpoint.Owner) *sync.WaitGroup {
 func HasGlobalCT() bool {
 	eps := GetEndpoints()
 	for _, e := range eps {
-		e.RLock()
+		e.Mutex.RLock()
 		globalCT := e.Consumable != nil && !e.Opts.IsEnabled(endpoint.OptionConntrackLocal)
-		e.RUnlock()
+		e.Mutex.RUnlock()
 		if globalCT {
 			return true
 		}
@@ -273,7 +273,7 @@ func HasGlobalCT() bool {
 // GetEndpoints returns a slice of all endpoints present in endpoint manager.
 func GetEndpoints() []*endpoint.Endpoint {
 	mutex.RLock()
-	eps := []*endpoint.Endpoint{}
+	var eps []*endpoint.Endpoint
 	for _, ep := range endpoints {
 		eps = append(eps, ep)
 	}

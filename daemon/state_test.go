@@ -21,6 +21,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/cilium/cilium/common/addressing"
 	e "github.com/cilium/cilium/pkg/endpoint"
@@ -173,9 +174,6 @@ func (ds *DaemonSuite) TestReadEPsFromDirNames(c *C) {
 	c.Assert(len(eps), Equals, len(epsWanted))
 }
 
-	// Needs to be less than 1 second otherwise GetCachedMaxLabelID might
-	// not work properly
-	ds.d.EnableKVStoreWatcher(time.Nanosecond)
 func (ds *DaemonSuite) TestSyncLabels(c *C) {
 	// Needs to be less than 1 second otherwise GetCachedMaxLabelID might
 	// not work properly
@@ -211,7 +209,3 @@ func (ds *DaemonSuite) TestSyncLabels(c *C) {
 	// kv store
 	c.Assert(ep2SecLabelID, Equals, ep2.SecLabel.ID)
 }
-
-	// Needs to be less than 1 second otherwise GetCachedMaxLabelID might
-	// not work properly
-	ds.d.EnableKVStoreWatcher(time.Nanosecond)
