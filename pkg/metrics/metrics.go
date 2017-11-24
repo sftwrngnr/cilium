@@ -11,6 +11,7 @@ package metrics
 import (
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -73,6 +74,16 @@ var (
 		Name:      "policies_import_errors",
 		Help:      "Number of times a policy import has failed",
 	})
+
+	// Orchestration
+
+	// LastK8sEventTS is the time in seconds since epoch that we last recieved an
+	// event from k8s
+	LastK8sEventTS = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: Namespace,
+		Name:      "last_k8s_event_ts",
+		Help:      "Last timestamp when we received a kubernetes event",
+	})
 )
 
 func init() {
@@ -87,6 +98,8 @@ func init() {
 	registry.MustRegister(NumPolicies)
 	registry.MustRegister(PolicyRevision)
 	registry.MustRegister(PolicyImportErrors)
+
+	registry.MustRegister(LastK8sEventTS)
 }
 
 // Enable begins serving prometheus metrics on the address passed in. Addresses
@@ -100,4 +113,11 @@ func Enable(addr string) error {
 	}()
 
 	return nil
+}
+
+// SetTSValue sets the gauge to the time value provided
+func SetTSValue(c prometheus.Gauge, ts time.Time) {
+	// Build time in seconds since the epoch. Prometheus only takes floating
+	// point values, however, and urges times to be in seconds
+	c.Set(float64(ts.UnixNano()) / float64(1000000000))
 }
