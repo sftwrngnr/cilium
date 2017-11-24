@@ -90,10 +90,8 @@ func EnableConntrackGC(ipv4, ipv6 bool) {
 		seenGlobal := false
 		sleepTime := time.Duration(GcInterval) * time.Second
 		for {
-			Mutex.RLock()
-
-			for k := range Endpoints {
-				e := Endpoints[k]
+			eps := GetEndpoints()
+			for _, e := range eps {
 				e.Mutex.RLock()
 
 				if e.Consumable == nil {
@@ -129,8 +127,6 @@ func EnableConntrackGC(ipv4, ipv6 bool) {
 					RunGC(e, isLocal, false, ctmap.NewGCFilterBy(ctmap.GCFilterByTime))
 				}
 			}
-
-			Mutex.RUnlock()
 			time.Sleep(sleepTime)
 			seenGlobal = false
 		}

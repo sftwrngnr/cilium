@@ -289,8 +289,8 @@ func (d *Daemon) PolicyDelete(labels labels.LabelArray) (uint64, error) {
 		newConsumables := policy.GetConsumableCache().GetConsumables()
 
 		consumablesToRm := policy.ConsumablesInANotInB(oldConsumables, newConsumables)
-		endpointmanager.Mutex.RLock()
-		for _, ep := range endpointmanager.Endpoints {
+		eps := endpointmanager.GetEndpoints()
+		for _, ep := range eps {
 			ep.Mutex.RLock()
 			// If the policy is not being enforced then keep the CT
 			// entries.
@@ -317,7 +317,6 @@ func (d *Daemon) PolicyDelete(labels labels.LabelArray) (uint64, error) {
 				}
 			}
 		}
-		endpointmanager.Mutex.RUnlock()
 	}()
 	return rev, nil
 }

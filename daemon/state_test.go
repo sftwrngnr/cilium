@@ -158,6 +158,9 @@ func (ds *DaemonSuite) generateEPs(baseDir string, epsWanted []*e.Endpoint, epsM
 }
 
 func (ds *DaemonSuite) TestReadEPsFromDirNames(c *C) {
+	// Needs to be less than 1 second otherwise GetCachedMaxLabelID might
+	// not work properly
+	ds.d.EnableKVStoreWatcher(time.Nanosecond)
 	epsWanted, epsMap := createEndpoints()
 	tmpDir, err := ioutil.TempDir("", "cilium-tests")
 	defer func() {
@@ -170,7 +173,13 @@ func (ds *DaemonSuite) TestReadEPsFromDirNames(c *C) {
 	c.Assert(len(eps), Equals, len(epsWanted))
 }
 
+	// Needs to be less than 1 second otherwise GetCachedMaxLabelID might
+	// not work properly
+	ds.d.EnableKVStoreWatcher(time.Nanosecond)
 func (ds *DaemonSuite) TestSyncLabels(c *C) {
+	// Needs to be less than 1 second otherwise GetCachedMaxLabelID might
+	// not work properly
+	ds.d.EnableKVStoreWatcher(time.Nanosecond)
 	epsWanted, _ := createEndpoints()
 
 	ep1 := epsWanted[0]
@@ -202,3 +211,7 @@ func (ds *DaemonSuite) TestSyncLabels(c *C) {
 	// kv store
 	c.Assert(ep2SecLabelID, Equals, ep2.SecLabel.ID)
 }
+
+	// Needs to be less than 1 second otherwise GetCachedMaxLabelID might
+	// not work properly
+	ds.d.EnableKVStoreWatcher(time.Nanosecond)

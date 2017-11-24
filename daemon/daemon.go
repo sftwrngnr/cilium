@@ -1086,9 +1086,6 @@ func (d *Daemon) validateExistingMaps() error {
 }
 
 func (d *Daemon) collectStaleMapGarbage() {
-	endpointmanager.Mutex.RLock()
-	defer endpointmanager.Mutex.RUnlock()
-
 	walker := func(path string, _ os.FileInfo, _ error) error {
 		return d.staleMapWalker(path)
 	}
@@ -1114,28 +1111,17 @@ func (d *Daemon) removeStaleIDFromPolicyMap(id uint32) {
 	}
 }
 
-// call with endpointmanager.Mutex.RLocked
 func (d *Daemon) checkStaleMap(path string, filename string, id string) {
 	if tmp, err := strconv.ParseUint(id, 0, 16); err == nil {
-		if _, ok := endpointmanager.Endpoints[uint16(tmp)]; !ok {
+		if ep := endpointmanager.LookupCiliumID(uint16(tmp)); ep != nil {
 			d.removeStaleIDFromPolicyMap(uint32(tmp))
 			d.removeStaleMap(path)
 		}
 	}
 }
 
-// call with endpointmanager.Mutex.RLocked
 func (d *Daemon) checkStaleGlobalMap(path string, filename string) {
-	var globalCTinUse = false
-
-	for k := range endpointmanager.Endpoints {
-		e := endpointmanager.Endpoints[k]
-		if e.Consumable != nil &&
-			e.Opts.IsDisabled(endpoint.OptionConntrackLocal) {
-			globalCTinUse = true
-			break
-		}
-	}
+	globalCTinUse := endpointmanager.HasGlobalCT()
 
 	if !globalCTinUse &&
 		(filename == ctmap.MapName6Global ||
@@ -1144,7 +1130,6 @@ func (d *Daemon) checkStaleGlobalMap(path string, filename string) {
 	}
 }
 
-// call with endpointmanager.Mutex.RLocked
 func (d *Daemon) staleMapWalker(path string) error {
 	filename := filepath.Base(path)
 
