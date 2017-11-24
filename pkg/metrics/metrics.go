@@ -84,6 +84,14 @@ var (
 		Name:      "last_k8s_event_ts",
 		Help:      "Last timestamp when we received a kubernetes event",
 	})
+
+	// LastContainerdEventTS is the time in seconds since epoch that we last recieved an
+	// event from containerd
+	LastContainerdEventTS = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: Namespace,
+		Name:      "last_containerd_event_ts",
+		Help:      "Last timestamp when we received a containerd event",
+	})
 )
 
 func init() {
@@ -100,6 +108,7 @@ func init() {
 	registry.MustRegister(PolicyImportErrors)
 
 	registry.MustRegister(LastK8sEventTS)
+	registry.MustRegister(LastContainerdEventTS)
 }
 
 // Enable begins serving prometheus metrics on the address passed in. Addresses
