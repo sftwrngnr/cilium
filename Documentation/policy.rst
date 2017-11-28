@@ -441,6 +441,8 @@ endpoint that is communicating over TCP on port 80:
 
 .. literalinclude:: ../examples/policies/multi_rule.json
 
+.. _l7_policy:
+
 Layer 7
 =======
 
